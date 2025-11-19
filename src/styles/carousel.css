@@ -1,0 +1,76 @@
+.carousel {
+  margin: 0.75rem auto 1.5rem;
+  border-radius: 8px;
+  overflow: hidden;
+  background: transparent;
+}
+
+.carousel-inner {
+  display: flex;
+  transition: transform 0.7s cubic-bezier(.22,.9,.27,1);
+  height: 360px;
+  will-change: transform;
+}
+
+.carousel-slide {
+  min-width: 100%;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.carousel-slide::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(7,7,11,0.12), rgba(7,7,11,0.28));
+}
+
+.carousel-overlay {
+  position: relative;
+  z-index: 2;
+  color: var(--text);
+  text-align: center;
+  padding: 1rem 1.5rem;
+}
+
+.carousel-overlay h2 {
+  font-size: 1.6rem;
+  margin-bottom: 0.4rem;
+}
+
+.carousel-overlay p {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.carousel-dots {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  padding: 0.5rem 0 0.8rem;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.25);
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.dot.active {
+  background: var(--primary);
+  transform: scale(1.2);
+}
+
+@media (min-width: 900px) {
+  .carousel-inner { height: 420px; }
+  .carousel-overlay h2 { font-size: 2rem; }
+}
+.carousel-slide { transform: none; opacity: 1; transition: none; }

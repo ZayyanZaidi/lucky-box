@@ -1,0 +1,50 @@
+.pm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(3,3,7,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.pm-card {
+  width: 420px;
+  max-width: calc(100% - 32px);
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--entry-border);
+  color: var(--text);
+}
+
+.pm-close {
+  background: transparent;
+  border: none;
+  float: right;
+  font-size: 1.1rem;
+  cursor: pointer;
+  color: var(--muted);
+}
+
+.pm-card h3 { margin: 0 0 0.25rem 0; }
+.pm-card .muted { color: var(--muted); font-size: 0.95rem; margin-bottom: 0.6rem; }
+
+.pm-form label { display: block; margin-bottom: 0.6rem; font-size: 0.95rem; }
+.pm-form input, .pm-form select {
+  width: 100%;
+  padding: 0.6rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: var(--entry-bg);
+  color: var(--text);
+  margin-top: 0.25rem;
+}
+
+.row { display: flex; gap: 0.6rem; }
+.row label { flex: 1; }
+
+.pm-actions { display: flex; gap: 0.6rem; margin-top: 0.8rem; }
+.confirm { background: var(--btn-bg); color: var(--btn-text); flex: 1; padding: 0.6rem; border-radius: 8px; min-height: var(--nav-btn-h); }
+.cancel { background: transparent; border: 1px solid var(--entry-border); color: var(--text); padding: 0.6rem; border-radius: 8px; min-height: var(--nav-btn-h); }

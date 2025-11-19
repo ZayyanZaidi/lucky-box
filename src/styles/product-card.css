@@ -1,0 +1,75 @@
+.product-card {
+  background-color: var(--card-bg);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  will-change: transform;
+  border: 1px solid var(--entry-border);
+}
+
+.product-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 24px rgba(106, 92, 255, 0.25);
+}
+
+.product-card img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.product-info {
+  padding: 0.9rem 1rem 1.1rem;
+}
+
+.product-head { display:flex; align-items:center; gap:10px; margin-bottom: 6px; }
+.product-badge { font-size: 12px; padding: 4px 8px; border-radius: 999px; border: 1px solid var(--entry-border); background: var(--entry-bg); color: var(--text); }
+.product-title { margin: 0; font-size: 1.05rem; line-height: 1.2; }
+.product-desc { color: var(--muted); font-size: 0.9rem; margin: 4px 0 10px; line-height: 1.4; }
+.product-price { color: var(--text); font-weight: 700; margin-bottom: 10px; }
+
+.product-info h3 {
+  font-size: 1.05rem;
+  margin-bottom: 0.35rem;
+  color: var(--text);
+  line-height: 1.25;
+}
+
+.product-info p {
+  color: var(--muted);
+  margin-bottom: 0.9rem;
+}
+
+.product-info button {
+  background: var(--btn-bg);
+  color: var(--btn-text);
+  width: 100%;
+  padding: 0.65rem;
+  border-radius: 10px;
+  font-weight: 700;
+  transition: transform var(--transition-fast), opacity var(--transition-fast);
+  border: none;
+  cursor: pointer;
+}
+
+.product-info button:hover {
+  transform: translateY(-1px);
+  opacity: 0.98;
+}
+
+@keyframes boxOpen {
+  0% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.03) rotate(-1deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+.product-card.opening { animation: boxOpen 420ms ease; }
+
+.product-card[data-category="Gaming"] { border-color: rgba(29,78,216,0.35); box-shadow: 0 0 16px rgba(29,78,216,0.15); }
+.product-card[data-category="Anime"] { border-color: rgba(236,72,153,0.35); box-shadow: 0 0 16px rgba(236,72,153,0.15); }
+.product-card[data-category="Tech"] { border-color: rgba(6,182,212,0.35); box-shadow: 0 0 16px rgba(6,182,212,0.15); }
+.product-card[data-category="Books"] { border-color: rgba(245,158,11,0.35); box-shadow: 0 0 16px rgba(245,158,11,0.15); }
+.product-card[data-category="Snacks"] { border-color: rgba(132,204,22,0.35); box-shadow: 0 0 16px rgba(132,204,22,0.15); }
+.product-card[data-category="Collectibles"] { border-color: rgba(244,114,182,0.35); box-shadow: 0 0 16px rgba(244,114,182,0.15); }
+.product-card[data-category="Jewelery"], .product-card[data-category="Jewelry"] { border-color: rgba(252,211,77,0.35); box-shadow: 0 0 16px rgba(252,211,77,0.15); }

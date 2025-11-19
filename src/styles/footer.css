@@ -1,0 +1,37 @@
+@import "./variables.css";
+
+.footer {
+  background-color: var(--card-bg);
+  color: var(--text);
+  text-align: center;
+  padding: 2rem 1rem;
+  margin-top: 4rem;
+  border-top: 1px solid var(--entry-border);
+}
+
+.footer p {
+  margin: 0.5rem 0;
+  font-size: 0.95rem;
+}
+
+.footer-links {
+  margin-top: 0.5rem;
+}
+
+.footer-links a {
+  color: var(--primary);
+  margin: 0 0.5rem;
+  transition: color 0.3s ease;
+}
+
+.footer-links a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.footer small {
+  display: block;
+  margin-top: 1rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}

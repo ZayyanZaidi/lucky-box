@@ -1,0 +1,2 @@
+.theme-toggle { background: transparent; border: 1px solid rgba(255,255,255,0.06); padding: 6px 8px; border-radius: 8px; cursor: pointer; color: var(--text); font-size: 14px; }
+.theme-toggle:hover { background: rgba(255,255,255,0.02); }
