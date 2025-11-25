@@ -13,7 +13,9 @@ export default function Checkout() {
 
   const [payOpen, setPayOpen] = useState(false);
 
+  const USD_TO_PKR = 278;
   const total = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
+  const totalInRupees = Math.round(total * USD_TO_PKR);
   const { show } = useNotification();
 
   const handleSubmitOrder = async ({ method, paymentDetails }) => {
@@ -21,23 +23,34 @@ export default function Checkout() {
       const items = cart.map((i) => ({ productId: i._id, quantity: i.qty || 1 }));
       const stored = typeof window !== "undefined" ? localStorage.getItem("user") : null;
       const user = stored ? JSON.parse(stored) : null;
-      const payload = { userId: user?._id || "guest", items, total, paymentMethod: method, paymentDetails, shippingAddress: paymentDetails?.address || "" };
+      const payload = { 
+        userId: user?._id || "guest", 
+        items, 
+        total: totalInRupees, 
+        paymentMethod: method, 
+        paymentDetails, 
+        shippingAddress: paymentDetails?.address || "" 
+      };
 
-      if (method === "PayFast") {
-        const orderResp = await API.post("/api/orders", payload);
+      if (method === "Credit Card (Stripe)") {
+        const orderResp = await API.post("/api/orders", { ...payload, paymentMethod: "Stripe" });
         const orderId = orderResp?.data?._id;
-        if (!orderId) throw new Error("Failed to create order for PayFast");
-        const createResp = await API.post("/api/payments/payfast/create", {
+        
+        if (!orderId) throw new Error("Failed to create order for payment");
+        
+        const createResp = await API.post("/api/payments/stripe/create", {
           orderId,
-          amount: Math.round(total),
-          currency: "ZAR",
+          amount: totalInRupees,
+          currency: "pkr",
         });
+        
         const redirectUrl = createResp?.data?.redirect_url;
-        if (!redirectUrl) throw new Error("Failed to create PayFast redirect");
+        if (!redirectUrl) throw new Error("Failed to create payment session");
         window.location.href = redirectUrl;
         return;
       }
-
+      
+      
       await API.post("/api/orders", payload);
       clearCart();
       setPayOpen(false);
@@ -59,17 +72,17 @@ export default function Checkout() {
           {cart.map((i) => (
             <div key={i._id} className="flex justify-between border-b border-gray-700 py-2">
               <span>{i.title}</span>
-              <span>USD {i.price * i.qty}</span>
+              <span>Rs. {Math.round(i.price * i.qty * USD_TO_PKR)}</span>
             </div>
           ))}
-          <p className="mt-4 font-bold text-amber-400">Total: USD {total}</p>
+          <p className="mt-4 font-bold text-amber-400">Total: Rs. {totalInRupees}</p>
           <div style={{ display: "flex", gap: 12, marginTop: 12 }}>
             <button onClick={() => setPayOpen(true)} className="confirm-btn">Proceed to Payment</button>
             <button onClick={() => { clearCart(); show && show("Cart cleared", { type: "info", timeout: 2000 }); }} className="btn-cancel">Clear Cart</button>
           </div>
         </>
       )}
-      <PaymentModal open={payOpen} onClose={() => setPayOpen(false)} total={total} onConfirm={handleSubmitOrder} />
+      <PaymentModal open={payOpen} onClose={() => setPayOpen(false)} total={totalInRupees} onConfirm={handleSubmitOrder} />
     </div>
   );
 }

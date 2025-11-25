@@ -1,7 +1,25 @@
+import { useEffect } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { useCart } from "../context/cartContext";
+import { useNotification } from "../context/notificationContext";
 import boxTiers from "../assets/box-tiers.jpg";
 import "../styles/pages.css";
 
 export default function OrderConfirm() {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { clearCart } = useCart();
+  const { show } = useNotification();
+
+  useEffect(() => {
+    const session = searchParams.get("session_id");
+    if (session) {
+      clearCart();
+      show && show("Payment confirmed — cart cleared", { type: "success", timeout: 3000 });
+      navigate("/orders", { replace: true });
+    }
+  }, [searchParams]);
+
   return (
     <div className="order-confirm-page text-center mt-16">
       <div className="orders-banner" style={{ backgroundImage: `url(${boxTiers})` }} />

@@ -2,6 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 import Order from "../models/order.js";
 import User from "../models/user.js";
+import MysteryBox from "../models/mysteryBox.js";
 import { sendMailjetEmail } from "../utils/mailjetClient.js";
 
 const router = express.Router();
@@ -9,7 +10,7 @@ const router = express.Router();
 router.get("/", async (req, res) => {
   try {
     let orders = await Order.find()
-      .populate({ path: "items.productId", select: "title price image_url" })
+      .populate({ path: "items.productId", select: "title price image_url category" })
       .populate({ path: "userId", select: "username email" })
       .lean();
 
@@ -45,7 +46,7 @@ router.get("/user/:userId", async (req, res) => {
 
     const orders = await Order.find({ $or: [{ userId: uid }, { userId }] })
       .sort({ createdAt: -1 })
-      .populate({ path: "items.productId", select: "title price image_url" })
+      .populate({ path: "items.productId", select: "title price image_url category" })
       .populate({ path: "userId", select: "username email" });
 
     res.status(200).json(orders);
@@ -57,7 +58,7 @@ router.get("/user/:userId", async (req, res) => {
 router.get("/:id", async (req, res) => {
   try {
     let order = await Order.findById(req.params.id)
-      .populate({ path: "items.productId", select: "title price image_url" })
+      .populate({ path: "items.productId", select: "title price image_url category" })
       .populate({ path: "userId", select: "username email" })
       .lean();
     if (!order) return res.status(404).json({ msg: "Order not found" });
@@ -78,21 +79,57 @@ router.post("/", async (req, res) => {
     const body = { ...req.body };
     if (body.userId) {
       try {
-        body.userId = mongoose.Types.ObjectId(body.userId);
+        body.userId = new mongoose.Types.ObjectId(body.userId);
       } catch (e) {
       }
     }
 
+    if (body.items && Array.isArray(body.items)) {
+      body.items = body.items.map((item) => {
+        try {
+          return {
+            ...item,
+            productId: new mongoose.Types.ObjectId(item.productId),
+          };
+        } catch (e) {
+          return item;
+        }
+      });
+    }
+
     const newOrder = await Order.create(body);
     const populated = await Order.findById(newOrder._id)
-      .populate({ path: "items.productId", select: "title price image_url" })
+      .populate({ path: "items.productId", select: "title price image_url category" })
       .populate({ path: "userId", select: "username email" });
     if ((body.paymentMethod || "").toLowerCase() === "cash on delivery") {
       try {
         const toEmail = populated.userId?.email;
         if (toEmail) {
-          const lines = (populated.items || []).map(i => `${i.productId?.title || "Item"} x ${i.quantity || 1}`).join("<br/>");
-          const html = `<h3>Order ${String(populated._id)}</h3><p>Total: ${populated.total}</p><p>Address: ${populated.shippingAddress || ""}</p><p>${lines}</p>`;
+          let itemDetails = [];
+          let boxNames = [];
+          for (const i of populated.items || []) {
+            const product = i.productId;
+            if (product) {
+              itemDetails.push(`${product.title || product.name} (Category: ${product.category || "N/A"}) x ${i.quantity || 1} @ Rs.${product.price}`);
+              if (product.category && !boxNames.includes(product.category)) {
+                boxNames.push(product.category);
+              }
+            } else {
+              let fallback = null;
+              try {
+                fallback = await MysteryBox.findById(i.productId).lean();
+              } catch {}
+              if (fallback) {
+                itemDetails.push(`${fallback.name} (Category: ${fallback.category || "N/A"}) x ${i.quantity || 1} @ Rs.${fallback.price}`);
+                if (fallback.category && !boxNames.includes(fallback.category)) {
+                  boxNames.push(fallback.category);
+                }
+              } else {
+                itemDetails.push(`Item x ${i.quantity || 1}`);
+              }
+            }
+          }
+          const html = `<h3>Order ${String(populated._id)}</h3><p>Total: Rs.${populated.total}</p><p>Address: ${populated.shippingAddress || ""}</p><p>Boxes: ${boxNames.length ? boxNames.join(", ") : "N/A"}</p><p>Items:<br/>${itemDetails.join("<br/>")}</p>`;
           await sendMailjetEmail({ toEmail, toName: populated.userId?.username || toEmail, subject: "Order Invoice", html });
         }
       } catch (_) {}

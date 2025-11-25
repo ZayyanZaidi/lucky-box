@@ -1,126 +1,155 @@
 import express from "express";
+import mongoose from "mongoose";
 import Order from "../models/order.js";
-import { createPayfastRedirect } from "../utils/payfastClient.js";
+import MysteryBox from "../models/mysteryBox.js";
+import { createStripeCheckoutSession, constructEventFromPayload, getStripeConfig } from "../utils/stripeClient.js";
 import { sendMailjetEmail } from "../utils/mailjetClient.js";
 
 const router = express.Router();
 
-router.use((req, _res, next) => { try { console.log(`[payments] ${req.method} ${req.path}`); } catch (_) {} next(); });
-router.options("/payfast/create", (req, res) => res.sendStatus(204));
-router.get("/payfast/create", (req, res) => res.status(405).json({ msg: "Use POST /api/payments/payfast/create" }));
+router.options("/stripe/create", (req, res) => res.sendStatus(204));
+router.get("/stripe/create", (req, res) => res.status(405).json({ msg: "Use POST /api/payments/stripe/create" }));
 
-router.post("/payfast/create", async (req, res) => {
+router.post("/stripe/create", async (req, res) => {
   try {
-    try { console.log("/payfast/create", req.method, req.headers["origin"], req.headers["content-type"]); } catch (_) {}
-    const { orderId, amount, currency = "ZAR" } = req.body || {};
-    if (!orderId || !amount) return res.status(400).json({ msg: "orderId and amount are required" });
+    const { orderId, amount, currency = 'usd' } = req.body || {};
+    
+    if (!orderId || amount === undefined) {
+      return res.status(400).json({ msg: "orderId and amount are required" });
+    }
+
     const order = await Order.findById(orderId);
     if (!order) return res.status(404).json({ msg: "Order not found" });
-    order.paymentMethod = "PayFast";
+    
+    order.paymentMethod = "Stripe";
     await order.save();
+    
     const FRONTEND_BASE = process.env.FRONTEND_BASE_URL || "http://localhost:5173";
     const buyerEmail = order?.userId?.email || undefined;
-    const redirect = createPayfastRedirect({
+    
+    const { url } = await createStripeCheckoutSession({
+      orderId: order._id,
       amount: Number(amount || order.total || 0),
-      itemName: `Order ${String(order._id)}`,
-      itemDescription: order.shippingAddress || "Mystery Loot Box Order",
-      paymentId: String(order._id),
-      buyerEmail,
+      currency: currency.toLowerCase(),
+      successUrl: `${FRONTEND_BASE}/orders?session_id={CHECKOUT_SESSION_ID}`,
+      cancelUrl: `${FRONTEND_BASE}/checkout`,
+      customerEmail: buyerEmail,
     });
+
     order.paymentDetails = {
       ...(order.paymentDetails || {}),
-      payfast: {
-        reference: String(order._id),
+      stripe: {
+        orderId: String(order._id),
         amount,
         currency,
-        redirect_url: redirect || null,
-        frontend_after_success: `${FRONTEND_BASE}/orders`,
-        frontend_after_cancel: `${FRONTEND_BASE}/checkout`,
         createdAt: new Date().toISOString(),
       },
     };
+    
     await order.save();
-    if (!redirect) return res.status(502).json({ msg: "Failed to create PayFast redirect" });
-    return res.status(200).json({ redirect_url: redirect });
+    
+    if (!url) {
+      return res.status(502).json({ msg: "Failed to create Stripe checkout session" });
+    }
+    
+    return res.status(200).json({ redirect_url: url });
   } catch (err) {
-    const status = err?.response?.status || 500;
-    const msg = err?.response?.data?.message || err?.message || "PayFast error";
-    const data = err?.response?.data;
-    try { console.error("payfast_create_error", { status, msg, data }); } catch(_) {}
-    return res.status(status).json({ msg, data });
+    console.error("stripe_create_error", err);
+    const status = err?.statusCode || 500;
+    const msg = err?.message || "Stripe error";
+    return res.status(status).json({ msg, error: err });
   }
 });
 
-router.all("/payfast/return", async (req, res) => {
-  const FRONTEND_BASE = process.env.FRONTEND_BASE_URL || "http://localhost:5173";
+router.post('/stripe/webhook', express.raw({type: 'application/json'}), async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  let event;
+
   try {
-    const q = req.query || {};
-    const b = req.body || {};
-    try { console.log("[payfast:return] query=", q, "body=", b); } catch (_) {}
-
-    const reference = q.m_payment_id || b.m_payment_id || q.reference || b.reference;
-    const statusRaw = q.payment_status || b.payment_status || "";
-    const status = statusRaw.toString().toLowerCase();
-
-    const isExplicitFail = status === "failed" || status === "cancelled";
-    const ok = !isExplicitFail;
-    const dest = ok ? "/orders" : "/checkout";
-
-    if (reference) {
-      try {
-        const order = await Order.findById(reference);
-        if (order) {
-          order.status = ok ? "paid" : (order.status === "paid" ? "paid" : "failed");
-          await order.save();
-        }
-      } catch (innerErr) {
-        try { console.error("[payfast:return] failed to update order", innerErr?.message || innerErr); } catch (_) {}
-      }
-    }
-
-    return res.redirect(303, `${FRONTEND_BASE}${dest}`);
-  } catch (e) {
-    try { console.error("[payfast:return] handler error", e?.message || e); } catch (_) {}
-    return res.redirect(303, `${FRONTEND_BASE}/checkout`);
-  }
-});
-
-router.post("/payfast/webhook", async (req, res) => {
-  try {
-    const { m_payment_id, payment_status } = req.body || {};
-    const reference = m_payment_id || req.body.reference;
-    if (!reference) return res.status(400).json({ msg: "reference required" });
-    const order = await Order.findById(reference);
-    if (!order) return res.status(404).json({ msg: "Order not found" });
-    if (String(payment_status).toLowerCase() === "complete" || String(payment_status).toLowerCase() === "paid" || String(payment_status).toLowerCase() === "success") {
-      order.status = "paid";
-      try {
-        await order.populate({ path: "userId", select: "username email" });
-        const toEmail = order.userId?.email;
-        if (toEmail) {
-          const lines = (order.items || []).map(i => `${i.productId || "Item"} x ${i.quantity || 1}`).join("<br/>");
-          const html = `<h3>Order ${String(order._id)}</h3><p>Total: ${order.total}</p><p>Address: ${order.shippingAddress || ""}</p><p>${lines}</p>`;
-          await sendMailjetEmail({ toEmail, toName: order.userId?.username || toEmail, subject: "Order Invoice", html });
-        }
-      } catch (_) {}
-    } else if (String(payment_status).toLowerCase() === "failed" || String(payment_status).toLowerCase() === "cancelled") {
-      order.status = "failed";
-    }
-    order.paymentDetails = {
-      ...(order.paymentDetails || {}),
-      payfast: {
-        ...(order.paymentDetails?.payfast || {}),
-        latestWebhook: {
-          headers: req.headers,
-          body: req.body,
-          receivedAt: new Date().toISOString(),
-        },
-      },
-    };
-    await order.save();
-    return res.status(200).json({ ok: true });
+    event = constructEventFromPayload(sig, req.body, getStripeConfig().webhookSecret);
   } catch (err) {
-    return res.status(500).json({ msg: err.message });
+    console.error(`Webhook signature verification failed: ${err.message}`);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  try {
+    switch (event.type) {
+      case 'checkout.session.completed':
+        const session = event.data.object;
+        const orderId = session.metadata?.orderId;
+        
+        if (orderId) {
+          const order = await Order.findById(orderId);
+          if (order) {
+            order.status = 'paid';
+            order.paymentDetails = {
+              ...(order.paymentDetails || {}),
+              stripe: {
+                ...(order.paymentDetails?.stripe || {}),
+                paymentIntent: session.payment_intent,
+                customer: session.customer,
+                paymentStatus: session.payment_status,
+                webhookReceivedAt: new Date().toISOString(),
+              },
+            };
+            
+            try {
+              await order.populate({ path: "userId", select: "username email" });
+              const toEmail = order.userId?.email;
+              if (toEmail) {
+                let itemDetails = [];
+                let boxNames = [];
+                for (const i of order.items || []) {
+                  let product = null;
+                  try {
+                    product = await mongoose.model("Product").findById(i.productId).lean();
+                  } catch {}
+                  if (product) {
+                    itemDetails.push(`${product.title || product.name} (Category: ${product.category || "N/A"}) x ${i.quantity || 1} @ Rs.${product.price}`);
+                    if (product.category && !boxNames.includes(product.category)) {
+                      boxNames.push(product.category);
+                    }
+                  } else {
+                    let fallback = null;
+                    try {
+                      fallback = await MysteryBox.findById(i.productId).lean();
+                    } catch {}
+                    if (fallback) {
+                      itemDetails.push(`${fallback.name} (Category: ${fallback.category || "N/A"}) x ${i.quantity || 1} @ Rs.${fallback.price}`);
+                      if (fallback.category && !boxNames.includes(fallback.category)) {
+                        boxNames.push(fallback.category);
+                      }
+                    } else {
+                      itemDetails.push(`Item x ${i.quantity || 1}`);
+                    }
+                  }
+                }
+                const html = `<h3>Order ${String(order._id)}</h3><p>Total: Rs.${order.total}</p><p>Address: ${order.shippingAddress || ""}</p><p>Boxes: ${boxNames.length ? boxNames.join(", ") : "N/A"}</p><p>Items:<br/>${itemDetails.join("<br/>")}</p>`;
+                await sendMailjetEmail({ toEmail, toName: order.userId?.username || toEmail, subject: "Order Confirmation", html });
+              }
+            } catch (emailErr) {
+              console.error('Failed to send confirmation email:', emailErr);
+            }
+            
+            await order.save();
+          }
+        }
+        break;
+      
+      case 'payment_intent.succeeded':
+        break;
+        
+      case 'payment_intent.payment_failed':
+        break;
+        
+      default:
+        break;
+    }
+
+    res.json({ received: true });
+  } catch (err) {
+    console.error('Error processing webhook:', err);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 });
 

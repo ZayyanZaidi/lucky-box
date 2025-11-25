@@ -36,6 +36,24 @@ h1, h2, h3 { letter-spacing: -0.02em; text-shadow: 0 2px 12px rgba(0,0,0,0.25); 
   animation: rainbowShift 14s ease infinite;
 }
 
+.theme-dark body {
+  background: linear-gradient(120deg,
+    #021026,
+    #08132a,
+    #0b2540,
+    #13263f,
+    #1b1630
+  );
+  background-size: 300% 300%;
+  animation: darkShift 18s ease infinite;
+}
+
+@keyframes darkShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
 @keyframes rainbowShift {
   0% { background-position: 0% 50%, 0 0; }
   50% { background-position: 100% 50%, 0 0; }

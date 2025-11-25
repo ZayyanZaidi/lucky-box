@@ -1,8 +1,56 @@
-## Mystery Loot Box
+# Mystery Loot Box - E-Commerce Application
 
-Mystery Loot Box is a full‑stack demo of a modern loot‑box style experience. The focus of the project is on **structure**, **separation of concerns**, and **use of contemporary React/Node tooling**, rather than on complex game logic.
+Mystery Loot Box is a full-stack e-commerce application for purchasing mystery boxes across multiple categories (gaming, tech, anime, books, collectibles, snacks, jewelry). The application features user authentication, Stripe payment integration, order management, and an admin dashboard for managing inventory.
 
-This README describes **how the project is organized**, **why certain decisions were made**, and **which resources/libraries are used**.
+This README describes the project structure, key features, and deployment instructions.
+
+---
+
+## Key Features
+
+- **User Authentication** – Sign up, login, and password reset with JWT tokens and bcryptjs hashing.
+- **Product Catalog** – Browse mystery boxes by category with filtering and responsive grid layout.
+- **Shopping Cart** – Add items, manage quantities, and clear cart after successful payment.
+- **Payment Integration** – Stripe credit card payments with PKR (Pakistani Rupee) currency support.
+- **Order Management** – Track orders with detailed confirmation emails showing itemized purchases.
+- **Admin Dashboard** – Manage boxes (create, edit, delete), view sales statistics, and monitor inventory.
+- **Responsive Design** – Mobile-friendly UI with dark/light theme toggle.
+- **Email Notifications** – Order confirmations sent via Mailjet with itemized details, box names, and total amounts.
+
+---
+
+## Recent Updates (Session 2)
+
+### Cart & Payment Flow
+- Cart now clears automatically after successful Stripe payment (via `session_id` detection).
+- Payment amounts converted to PKR (Pakistani Rupees) with 1 USD = 278 PKR rate.
+- Stripe currency set to 'pkr' for proper transaction handling.
+
+### Order Confirmation Emails
+- Emails now display itemized order details including:
+  - Individual item names with category and quantity
+  - Unit prices in Rs. (Pakistani Rupees)
+  - Box names grouped by category
+  - Total amount prefixed with "Rs."
+- Applies to both Stripe and Cash on Delivery payment methods.
+- Email fallback logic: products pulled from MysteryBox collection if not found in Product collection.
+
+### Currency Localization
+- All prices and amounts now display in PKR currency with "Rs." prefix.
+- Checkout page shows totals in rupees (USD amount × 278).
+- Admin panel displays revenue statistics in Rs.
+
+### Bug Fixes & Improvements
+- Fixed 404 errors from unnecessary API calls to `/api/boxes/{id}` in product cards.
+- Fixed null `productId` issues by converting user IDs and product IDs to proper MongoDB ObjectIds.
+- Removed all debug logging and inline comments from codebase.
+
+### Admin Panel Enhancements
+- Redesigned admin dashboard using the same layout as the home page categories section.
+- Added Sales Overview statistics (Total Orders, Items Sold, Revenue in Rs.).
+- Boxes displayed in responsive grid matching product card styling.
+- Integrated "Add New Box" button with proper form state management.
+- Footer added to ensure content extends from navbar to below footer with proper spacing.
 
 ---
 
@@ -194,12 +242,138 @@ These choices prioritize **developer experience**, **readability**, and **alignm
 
 ---
 
+## Installation & Setup
+
+### Prerequisites
+- Node.js (v16+)
+- MongoDB (local or Atlas connection string)
+- Stripe account and API keys
+- Mailjet account and API credentials
+
+### Environment Variables
+Create a `.env` file in the `server/` directory:
+
+```env
+MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/dbname
+JWT_SECRET=your_jwt_secret_here
+STRIPE_SECRET_KEY=sk_test_your_stripe_key
+STRIPE_PUBLISHABLE_KEY=pk_test_your_stripe_key
+MAILJET_API_KEY=your_mailjet_key
+MAILJET_SECRET_KEY=your_mailjet_secret
+MAILJET_FROM_EMAIL=noreply@mysteryloot.com
+FRONTEND_BASE_URL=http://localhost:5173
+BACKEND_BASE_URL=http://localhost:5000
+```
+
+### Install Dependencies
+
+```bash
+cd my-app
+npm install
+
+cd server
+npm install
+```
+
+### Run Development Servers
+
+**Terminal 1 - Frontend:**
+```bash
+cd my-app
+npm run dev
+```
+
+**Terminal 2 - Backend:**
+```bash
+cd my-app/server
+npm run dev
+# or
+nodemon server.js
+```
+
+The frontend runs on `http://localhost:5173` and backend on `http://localhost:5000`.
+
+---
+
+## Pushing Changes to Repository
+
+Follow these steps to push all updates to your GitHub repository:
+
+### 1. Navigate to Project Directory
+```bash
+cd "C:\Users\Sony\VS Code Projects\mystery-loot-box"
+```
+
+### 2. Check Current Status
+```bash
+git status
+```
+
+This shows all modified, added, and deleted files.
+
+### 3. Add All Changes
+```bash
+git add .
+```
+
+Or add specific files:
+```bash
+git add my-app/src/ my-app/server/
+git add my-app/README.md
+```
+
+### 4. Commit with Descriptive Message
+```bash
+git commit -m "feat: Enhanced admin panel, payment flow, and email notifications with PKR currency
+
+- Implement cart clearing after Stripe payment success
+- Add itemized order confirmation emails with categories and pricing
+- Convert all currency to PKR (Pakistani Rupees) with 1 USD = 278 PKR rate
+- Fix null productId issues in orders using proper ObjectId conversion
+- Remove 404 errors from unnecessary box detail API calls
+- Redesign admin dashboard with responsive grid layout matching home page
+- Add Sales Overview statistics to admin panel
+- Clean up all debug logging and comments from codebase
+- Enhance admin panel footer and spacing for proper layout"
+```
+
+### 5. View Changes Before Pushing
+```bash
+git log --oneline -3
+```
+
+This shows your last 3 commits.
+
+### 6. Push to Remote Repository
+```bash
+git push origin main
+```
+
+Or if you want to push to a different branch:
+```bash
+git push -u origin feature-branch-name
+```
+
+### 7. Verify Push
+Visit your GitHub repository to confirm all changes are reflected:
+```
+https://github.com/ZayyanZaidi/lucky-box
+```
+
+---
+
+## Code Quality Standards
+
+- **No Comments** – Code is self-documenting through clear variable and function names.
+- **Consistent Styling** – Follows React and Node.js best practices.
+- **Error Handling** – Try-catch blocks and proper HTTP status codes.
+- **Security** – Password hashing, JWT validation, environment variable protection.
+
+---
+
 ## Design Goals
 
-- **Clarity over cleverness** – prioritizing explicit structures (controllers/models/routes) instead of magical abstractions.
-- **Separation of concerns** – keeping frontend UI concerns separate from backend business rules.
-- **Demonstrative** – showing how typical web‑app concerns (auth, loot/rewards, password reset) are wired together.
-- **Extensibility** – making it straightforward to add:
-  - More loot types and reward rules.
-  - Additional user flows such as inventory, trading, or leaderboards.
-
+- **Clarity over cleverness** – Explicit code structure for easy maintenance.
+- **Separation of concerns** – Frontend UI separate from backend business logic.
+- **User experience** – Smooth animations, responsive design, instant feedback.
+- **Extensibility** – Easy to add new categories, payment methods, or features.

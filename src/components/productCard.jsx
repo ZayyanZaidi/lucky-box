@@ -23,18 +23,9 @@ export default function ProductCard({ id, title, price, image, category, descrip
       setTimeout(() => card.classList.remove("opening"), 500);
     }
     fireConfetti(24);
-    API.get(`/api/boxes/${id}?size=${size}`)
-      .then((res) => {
-        const confirmedUnit = Number(res.data?.finalPrice) || unitPrice;
-        const enriched = { _id: id, title, price: confirmedUnit, image, category, size, qty: Math.max(1, Number(amount) || 1) };
-        if (onAddToCart) return onAddToCart(enriched);
-        alert(`${title} added to cart`);
-      })
-      .catch(() => {
-        const enrichedFallback = { _id: id, title, price: unitPrice, image, category, size, qty: Math.max(1, Number(amount) || 1) };
-        if (onAddToCart) return onAddToCart(enrichedFallback);
-        alert(`${title} added to cart`);
-      });
+    const enriched = { _id: id, title, price: unitPrice, image, category, size, qty: Math.max(1, Number(amount) || 1) };
+    if (onAddToCart) return onAddToCart(enriched);
+    alert(`${title} added to cart`);
   };
 
   return (
@@ -67,8 +58,8 @@ export default function ProductCard({ id, title, price, image, category, descrip
             style={{ width: 72 }}
           />
         </div>
-        <p className="product-price">USD {unitPrice} <span style={{ color: 'var(--muted)', marginLeft: 6 }}>(each)</span></p>
-        <p style={{ marginTop: 4 }}>Total: <strong>USD {unitPrice * (Math.max(1, Number(amount) || 1))}</strong></p>
+        <p className="product-price">Rs. {unitPrice} <span style={{ color: 'var(--muted)', marginLeft: 6 }}>(each)</span></p>
+        <p style={{ marginTop: 4 }}>Total: <strong>Rs. {unitPrice * (Math.max(1, Number(amount) || 1))}</strong></p>
         <button onClick={handleAdd}>Add to Cart</button>
       </div>
     </div>

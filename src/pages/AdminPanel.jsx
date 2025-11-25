@@ -113,10 +113,12 @@ export default function AdminPanel({ user }) {
       const payload = { ...form };
       if (!payload.name) throw new Error("Name is required");
 
-      if (activeBoxId) {
+      if (activeBoxId && activeBoxId !== "new") {
         await API.put(`/api/boxes/${activeBoxId}`, payload);
+      } else if (activeBoxId === "new") {
+        await API.post(`/api/boxes`, payload);
       } else {
-        throw new Error("Creating boxes via admin panel is not enabled");
+        throw new Error("No box selected to save");
       }
 
       await loadData();
@@ -163,41 +165,40 @@ export default function AdminPanel({ user }) {
   }
 
   return (
-    <div className="auth-container" style={{ alignItems: "stretch", paddingTop: 70 }}>
-      <div className="auth-banner" style={{ backgroundImage: `url(${heroLogo})` }} />
-      <div style={{ flex: 1, padding: 20, maxWidth: 1200, margin: "0 auto" }}>
+    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+      <div style={{ flex: 1, padding: 20, maxWidth: 1200, margin: "0 auto", width: "100%" }}>
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: 16,
-            borderBottom: "1px solid #eee",
-            paddingBottom: 12,
+            marginBottom: 24,
+            borderBottom: "1px solid var(--entry-border)",
+            paddingBottom: 16,
+            paddingTop: 16,
           }}
         >
           <div>
-            <h2 style={{ margin: 0 }}>Admin Dashboard</h2>
-            <p style={{ marginTop: 4, fontSize: 14, color: "#555" }}>
+            <h2 style={{ margin: 0, color: "var(--text)" }}>Admin Dashboard</h2>
+            <p style={{ marginTop: 4, fontSize: 14, color: "var(--muted)" }}>
               Signed in as {user?.username || user?.email}
             </p>
           </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button type="button" onClick={() => navigate("/")}>
-              View Storefront
-            </button>
-          </div>
+          <button type="button" onClick={() => navigate("/") }>
+            View Storefront
+          </button>
         </div>
 
         {error && (
           <div
             style={{
               marginBottom: 16,
-              padding: "8px 12px",
-              borderRadius: 6,
-              background: "#ffebee",
-              color: "#b71c1c",
+              padding: "12px 16px",
+              borderRadius: 8,
+              background: "rgba(211, 47, 47, 0.1)",
+              color: "#ef5350",
               fontSize: 14,
+              border: "1px solid rgba(211, 47, 47, 0.3)",
             }}
           >
             {error}
@@ -220,7 +221,7 @@ export default function AdminPanel({ user }) {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
                 gap: 12,
                 marginTop: 8,
               }}
@@ -228,69 +229,53 @@ export default function AdminPanel({ user }) {
               <div
                 style={{
                   borderRadius: 10,
-                  padding: 10,
+                  padding: 16,
                   background: "var(--card-bg)",
                   border: "1px solid var(--entry-border)",
                 }}
               >
-                <div style={{ fontSize: 12, textTransform: "uppercase", color: "#757575" }}>
+                <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--muted)", marginBottom: 8 }}>
                   Total Orders
                 </div>
-                <div style={{ fontSize: 22, fontWeight: 600 }}>{salesStats.totalOrders}</div>
+                <div style={{ fontSize: 28, fontWeight: 700, color: "var(--primary)" }}>{salesStats.totalOrders}</div>
               </div>
               <div
                 style={{
                   borderRadius: 10,
-                  padding: 10,
+                  padding: 16,
                   background: "var(--card-bg)",
                   border: "1px solid var(--entry-border)",
                 }}
               >
-                <div style={{ fontSize: 12, textTransform: "uppercase", color: "#757575" }}>
+                <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--muted)", marginBottom: 8 }}>
                   Items Sold
                 </div>
-                <div style={{ fontSize: 22, fontWeight: 600 }}>{salesStats.totalItems}</div>
+                <div style={{ fontSize: 28, fontWeight: 700, color: "var(--accent)" }}>{salesStats.totalItems}</div>
               </div>
               <div
                 style={{
                   borderRadius: 10,
-                  padding: 10,
+                  padding: 16,
                   background: "var(--card-bg)",
                   border: "1px solid var(--entry-border)",
                 }}
               >
-                <div style={{ fontSize: 12, textTransform: "uppercase", color: "#757575" }}>
+                <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--muted)", marginBottom: 8 }}>
                   Revenue
                 </div>
-                <div style={{ fontSize: 22, fontWeight: 600 }}>${salesStats.totalRevenue.toFixed(2)}</div>
+                <div style={{ fontSize: 28, fontWeight: 700, color: "var(--text)" }}>Rs. {Math.round(salesStats.totalRevenue)}</div>
               </div>
             </div>
           )}
         </section>
 
-        <section
-          style={{
-            padding: 16,
-            borderRadius: 10,
-            background: "#fafafa",
-            border: "1px solid #eee",
-          }}
-        >
-          <h3 style={{ marginTop: 0 }}>Boxes</h3>
-          {loading ? (
-            <p>Loading boxes...</p>
-          ) : boxes.length === 0 ? (
-            <p>No boxes found.</p>
-          ) : (
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-                gap: 12,
-                marginTop: 8,
-              }}
-            >
-              {boxes.map((box) => (
+        <section id="boxes-section" className="categories-section" style={{ marginTop: 32 }}>
+          <h2>Boxes Management</h2>
+          <div className="categories-grid">
+            {loading ? (
+              <p>Loading boxes...</p>
+            ) : boxes.length > 0 ? (
+              boxes.map((box) => (
                 <AdminProductCard
                   key={box._id}
                   box={box}
@@ -305,11 +290,50 @@ export default function AdminPanel({ user }) {
                   onCancel={resetForm}
                   onDelete={handleDelete}
                 />
-              ))}
+              ))
+            ) : (
+              <p>No boxes available.</p>
+            )}
+          </div>
+          <div style={{ marginTop: 24, paddingTop: 24, borderTop: "1px solid var(--entry-border)" }}>
+            <button
+              type="button"
+              onClick={() => { resetForm(); setActiveBoxId("new"); }}
+              style={{ padding: "12px 24px", fontSize: 16 }}
+            >
+              Add New Box
+            </button>
+          </div>
+          {activeBoxId === "new" && (
+            <div className="categories-grid" style={{ marginTop: 24 }}>
+              <AdminProductCard
+                key="__new__"
+                box={{ _id: "__new__", name: "New Box", category: form.category }}
+                isActive={true}
+                form={form}
+                categories={categories}
+                rarities={rarities}
+                saving={saving}
+                onEditClick={() => {}}
+                onChangeForm={setForm}
+                onSave={handleSave}
+                onCancel={resetForm}
+                onDelete={() => {}}
+              />
             </div>
           )}
         </section>
       </div>
+      <footer style={{ 
+        backgroundColor: "var(--card-bg)", 
+        textAlign: "center", 
+        padding: "2rem 0", 
+        color: "var(--text)", 
+        borderTop: "1px solid var(--entry-border)",
+        marginTop: "auto"
+      }}>
+        <p style={{ margin: 0, fontSize: "0.9rem" }}>© 2025 Mystery Loot Admin. All rights reserved.</p>
+      </footer>
     </div>
   );
 }
