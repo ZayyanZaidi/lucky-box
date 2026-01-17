@@ -15,8 +15,31 @@ import { sendMailjetEmail } from "./utils/mailjetClient.js";
 dotenv.config();
 
 const app = express();
-app.use(cors());
-app.options(/.*/, cors());
+
+// Configure CORS to allow requests from deployed frontend
+const corsOptions = {
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'https://lucky-box-jet.vercel.app',
+      'https://lucky-box.vercel.app',
+      process.env.FRONTEND_BASE_URL
+    ].filter(Boolean);
+    
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
