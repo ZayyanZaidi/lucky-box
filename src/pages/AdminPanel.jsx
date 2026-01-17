@@ -263,7 +263,7 @@ export default function AdminPanel({ user }) {
                 <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--muted)", marginBottom: 8 }}>
                   Revenue
                 </div>
-                <div style={{ fontSize: 28, fontWeight: 700, color: "var(--text)" }}>Rs. {Math.round(salesStats.totalRevenue)}</div>
+                <div style={{ fontSize: 28, fontWeight: 700, color: "var(--text)" }}>${Math.round(salesStats.totalRevenue)}</div>
               </div>
             </div>
           )}

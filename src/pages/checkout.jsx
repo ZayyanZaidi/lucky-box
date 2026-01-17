@@ -72,10 +72,10 @@ export default function Checkout() {
           {cart.map((i) => (
             <div key={i._id} className="flex justify-between border-b border-gray-700 py-2">
               <span>{i.title}</span>
-              <span>Rs. {Math.round(i.price * i.qty * USD_TO_PKR)}</span>
+              <span>${Math.round(i.price * i.qty * USD_TO_PKR)}</span>
             </div>
           ))}
-          <p className="mt-4 font-bold text-amber-400">Total: Rs. {totalInRupees}</p>
+          <p className="mt-4 font-bold text-amber-400">Total: ${totalInRupees}</p>
           <div style={{ display: "flex", gap: 12, marginTop: 12 }}>
             <button onClick={() => setPayOpen(true)} className="confirm-btn">Proceed to Payment</button>
             <button onClick={() => { clearCart(); show && show("Cart cleared", { type: "info", timeout: 2000 }); }} className="btn-cancel">Clear Cart</button>

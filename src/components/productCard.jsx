@@ -58,8 +58,8 @@ export default function ProductCard({ id, title, price, image, category, descrip
             style={{ width: 72 }}
           />
         </div>
-        <p className="product-price">Rs. {unitPrice} <span style={{ color: 'var(--muted)', marginLeft: 6 }}>(each)</span></p>
-        <p style={{ marginTop: 4 }}>Total: <strong>Rs. {unitPrice * (Math.max(1, Number(amount) || 1))}</strong></p>
+        <p className="product-price">${unitPrice} <span style={{ color: 'var(--muted)', marginLeft: 6 }}>(each)</span></p>
+        <p style={{ marginTop: 4 }}>Total: <strong>${unitPrice * (Math.max(1, Number(amount) || 1))}</strong></p>
         <button onClick={handleAdd}>Add to Cart</button>
       </div>
     </div>

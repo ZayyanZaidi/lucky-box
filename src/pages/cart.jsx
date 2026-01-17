@@ -39,7 +39,7 @@ export default function Cart() {
             <div className="cart-item" key={item._id}>
               <div className="item-info">
                 <h4>{item.title}</h4>
-                <p>Rs. {item.price}</p>
+                <p>${item.price}</p>
               </div>
               <div className="item-controls">
                 <button onClick={() => updateQty(item._id, item.qty - 1)}>−</button>
@@ -53,7 +53,7 @@ export default function Cart() {
       )}
 
       <div className="cart-total">
-        <h3>Total: Rs. {total}</h3>
+        <h3>Total: ${total}</h3>
         <button
           className="checkout-btn"
           onClick={() => navigate("/checkout")}

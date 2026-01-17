@@ -18,7 +18,7 @@ export default function PaymentModal({ open, onClose, onConfirm, total }) {
       <div className="pm-card" onClick={(e) => e.stopPropagation()}>
         <button className="pm-close" onClick={onClose}>✖</button>
         <h3>Payment</h3>
-        <p className="muted">Total: Rs. {total}</p>
+        <p className="muted">Total: ${total}</p>
         <form onSubmit={handleSubmit} className="pm-form">
           <label>
             Method
