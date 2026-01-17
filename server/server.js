@@ -19,15 +19,25 @@ const app = express();
 // Configure CORS to allow requests from deployed frontend
 const corsOptions = {
   origin: function (origin, callback) {
-    const allowedOrigins = [
-      'http://localhost:5173',
-      'http://localhost:3000',
-      'https://lucky-box-jet.vercel.app',
-      'https://lucky-box.vercel.app',
-      process.env.FRONTEND_BASE_URL
-    ].filter(Boolean);
+    // Build allowed origins from environment variables
+    const allowedOrigins = [];
     
-    if (!origin || allowedOrigins.includes(origin)) {
+    // Add frontend base URL from environment
+    if (process.env.FRONTEND_BASE_URL) {
+      allowedOrigins.push(process.env.FRONTEND_BASE_URL);
+    }
+    
+    // Add additional allowed origins from env (comma-separated)
+    if (process.env.ALLOWED_ORIGINS) {
+      allowedOrigins.push(...process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()));
+    }
+    
+    // In development, allow localhost
+    if (process.env.NODE_ENV !== 'production') {
+      allowedOrigins.push('http://localhost:5173', 'http://localhost:3000');
+    }
+    
+    if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
