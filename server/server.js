@@ -4,6 +4,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import path from "path";
+import { fileURLToPath } from "url";
 import boxesRoutes from "./routes/boxes.js";
 import User from "./models/user.js";
 import ordersRoutes from "./routes/orders.js";
@@ -14,6 +16,7 @@ import { sendMailjetEmail } from "./utils/mailjetClient.js";
 
 dotenv.config();
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 
 // Configure CORS to allow requests from deployed frontend
@@ -179,6 +182,10 @@ app.post("/api/auth/loginSignup", async (req, res) => {
   }
 });
 
+// Serve static files from frontend build
+const frontendDistPath = path.join(__dirname, "../dist");
+app.use(express.static(frontendDistPath));
+
 app.use("/api/boxes", boxesRoutes);
 app.use("/api/orders", ordersRoutes);
 app.use("/api/auth", verifyRoutes);
@@ -206,10 +213,17 @@ app.post("/api/auth/reset", async (req, res) => {
     res.status(500).json({ msg: err.message });
   }
 });
+
+// SPA fallback - serve index.html for all non-API routes
+app.get("*", (req, res) => {
+  res.sendFile(path.join(frontendDistPath, "index.html"));
+});
+
 mongoose
   .connect(MONGO_URI)
   .then(() => {
     console.log("MongoDB connected");
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  })
  })
   .catch((err) => console.error("MongoDB connection error:", err));
