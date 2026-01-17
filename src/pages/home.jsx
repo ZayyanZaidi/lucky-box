@@ -116,7 +116,7 @@ export default function Home() {
       <section id="contact" className="section muted-section">
         <h2>Contact</h2>
         <p>📞 <strong>{contactNumber || "+1 (555) 012-3456"}</strong></p>
-        <p>✉️ support@mysteryloot.example</p>
+        <p>✉️ {process.env.VITE_CONTACT_EMAIL || "support@mysteryloot.com"}</p>
       </section>
       <section id="terms" className="section muted-section">
         <h2>Terms</h2>
