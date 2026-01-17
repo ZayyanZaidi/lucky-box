@@ -33,12 +33,12 @@ export default function Checkout() {
       };
 
       if (method === "Credit Card (Stripe)") {
-        const orderResp = await API.post("/api/orders", { ...payload, paymentMethod: "Stripe" });
+        const orderResp = await API.post("/orders", { ...payload, paymentMethod: "Stripe" });
         const orderId = orderResp?.data?._id;
         
         if (!orderId) throw new Error("Failed to create order for payment");
         
-        const createResp = await API.post("/api/payments/stripe/create", {
+        const createResp = await API.post("/payments/stripe/create", {
           orderId,
           amount: totalInRupees,
           currency: "pkr",
@@ -51,7 +51,7 @@ export default function Checkout() {
       }
       
       
-      await API.post("/api/orders", payload);
+      await API.post("/orders", payload);
       clearCart();
       setPayOpen(false);
       show && show("Order placed. Invoice emailed.", { type: "success", timeout: 3500 });

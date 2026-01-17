@@ -17,7 +17,7 @@ export default function Home() {
   useEffect(() => {
     const fetchBoxes = async () => {
       try {
-        const res = await API.get("/api/boxes");
+        const res = await API.get("/boxes");
         setProducts(res.data);
       } catch (err) {
         console.error("Error fetching boxes:", err);

@@ -25,7 +25,7 @@ export default function LoginSignup({ setUser, user }) {
         show && show("It looks like you pasted a hashed password. Enter your plain-text password instead.", { type: "error", timeout: 5000 });
         return;
       }
-      const res = await API.post("/api/auth/login", { email, password });
+      const res = await API.post("/auth/login", { email, password });
       const data = res.data;
       if (setUser) setUser(data.user);
       localStorage.setItem("token", data.token);
@@ -41,13 +41,13 @@ export default function LoginSignup({ setUser, user }) {
   const handleSignup = async () => {
     try {
       if (!name || !email || !password) return show && show("Please fill all fields", { type: "error" });
-      const res = await API.post("/api/auth/signup", { username: name, email, password });
+      const res = await API.post("/auth/signup", { username: name, email, password });
       const data = res.data;
       if (setUser) setUser(data.user);
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       try {
-        await API.post("/api/auth/otp/send", { email });
+        await API.post("/auth/otp/send", { email });
         setIsOtpOpen(true);
       } catch (_) {}
       show && show("Account created. Enter the code sent to your email.", { type: "success" });
@@ -66,7 +66,7 @@ export default function LoginSignup({ setUser, user }) {
   const handleReset = async () => {
     try {
       if (!resetEmail || !resetPassword) return show && show("Please provide email and new password", { type: "error" });
-      const res = await API.post("/api/auth/reset", { email: resetEmail, newPassword: resetPassword });
+      const res = await API.post("/auth/reset", { email: resetEmail, newPassword: resetPassword });
       const data = res.data;
       show && show(data.msg || "Password reset", { type: "success" });
       setIsResetOpen(false);
@@ -145,7 +145,7 @@ export default function LoginSignup({ setUser, user }) {
             <div style={{ marginTop: 12 }}>
               <button onClick={async () => {
                 try {
-                  await API.post("/api/auth/otp/verify", { email, otp: otpValue });
+                  await API.post("/auth/otp/verify", { email, otp: otpValue });
                   const saved = localStorage.getItem("user");
                   const u = saved ? JSON.parse(saved) : null;
                   if (u) {
@@ -162,7 +162,7 @@ export default function LoginSignup({ setUser, user }) {
                 }
               }}>Verify</button>
               <button className="btn-cancel" style={{ marginLeft: 8 }} onClick={async () => {
-                try { await API.post("/api/auth/otp/send", { email }); show && show("Code resent", { type: "info" }); } catch (_) {}
+                try { await API.post("/auth/otp/send", { email }); show && show("Code resent", { type: "info" }); } catch (_) {}
               }}>Resend Code</button>
             </div>
           </div>

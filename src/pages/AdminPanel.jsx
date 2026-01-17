@@ -44,8 +44,8 @@ export default function AdminPanel({ user }) {
       setLoading(true);
       setError("");
       const [boxesRes, ordersRes] = await Promise.all([
-        API.get("/api/boxes"),
-        API.get("/api/orders"),
+        API.get("/boxes"),
+        API.get("/orders"),
       ]);
       setBoxes(boxesRes.data || []);
       setOrders(ordersRes.data || []);
@@ -93,7 +93,7 @@ export default function AdminPanel({ user }) {
     if (!window.confirm(`Delete box "${box.name}"?`)) return;
     try {
       setSaving(true);
-      await API.delete(`/api/boxes/${box._id}`);
+      await API.delete(`/boxes/${box._id}`);
       await loadData();
       if (activeBoxId === box._id) resetForm();
     } catch (err) {
@@ -114,9 +114,9 @@ export default function AdminPanel({ user }) {
       if (!payload.name) throw new Error("Name is required");
 
       if (activeBoxId && activeBoxId !== "new") {
-        await API.put(`/api/boxes/${activeBoxId}`, payload);
+        await API.put(`/boxes/${activeBoxId}`, payload);
       } else if (activeBoxId === "new") {
-        await API.post(`/api/boxes`, payload);
+        await API.post(`/boxes`, payload);
       } else {
         throw new Error("No box selected to save");
       }
